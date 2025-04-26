@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navbar } from '../../../components';
+import { Footer, Navbar } from '../../../components';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -349,6 +349,7 @@ const Contact = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };

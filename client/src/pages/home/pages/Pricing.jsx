@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar } from '../../../components';
+import { Footer, Navbar } from '../../../components';
 
 const Pricing = () => {
   const pricingPlans = [
@@ -239,6 +239,7 @@ const Pricing = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };
