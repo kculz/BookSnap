@@ -10,7 +10,9 @@ export { Footer, Navbar, Sidebar };
 
 import Signin from "./forms/Signin";
 import Signup from "./forms/Signup";
-export { Signin, Signup };
+import ForgetPassword from "./forms/ForgetPassword";
+import ResetPassword from "./forms/ResetPassword";
+export { Signin, Signup, ForgetPassword, ResetPassword };
 
 
 import ImageCard from "./gallery/ImageCard";

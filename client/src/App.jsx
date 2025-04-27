@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom"
-import { AdminDashboardLayout, AuthLayout, NotFound, Signin, Signup, UserDashboardLayout } from "./components"
+import { AdminDashboardLayout, AuthLayout, ForgetPassword, NotFound, ResetPassword, Signin, Signup, UserDashboardLayout } from "./components"
 import { About, AdminDashboard, AdminProfile, Contact, Home, ManageBookings, ManageUsers, Pricing, UserDashboard, UserProfile } from "./pages"
 
 
@@ -25,10 +25,14 @@ function App() {
         <Route path="manage-bookings" element={<ManageBookings />} />
       </Route>
 
-      <Route path="/auth" element={<AuthLayout />} >
-        <Route index path="signin" element={<Signin />} />
-        <Route path="signup" element={<Signup />} />
-      </Route>
+      <Route path="/auth" element={<AuthLayout />} />
+      <Route path="/signin" element={<Signin />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgetPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* 404 Not Found */}
+
 
       <Route path="*" element={<NotFound />} />
 

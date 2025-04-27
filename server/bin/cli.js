@@ -771,6 +771,86 @@ module.exports = ${serviceName};`;
     console.log(chalk.green(`Service created at ${filePath}`));
   });
 
+
+  program
+  .command('list-routes')
+  .description('List all registered routes in the application')
+  .action(() => {
+    try {
+      const routesPath = path.resolve(process.cwd(), 'routes');
+      const appPath = path.resolve(process.cwd(), 'app.js');
+      
+      // Check if routes directory exists
+      if (!fs.existsSync(routesPath)) {
+        console.error(chalk.red('Routes directory not found.'));
+        return;
+      }
+
+      // Get all route files
+      const routeFiles = fs.readdirSync(routesPath)
+        .filter(file => file.endsWith('.js'))
+        .map(file => path.join(routesPath, file));
+
+      // Check if app.js exists to get the base path
+      let basePath = '/';
+      if (fs.existsSync(appPath)) {
+        const appContent = fs.readFileSync(appPath, 'utf8');
+        const basePathMatch = appContent.match(/app\.use\(['"](.*?)['"],/);
+        if (basePathMatch && basePathMatch[1]) {
+          basePath = basePathMatch[1];
+        }
+      }
+
+      console.log(chalk.bold.blue('\nRegistered Routes:\n'));
+      console.log(chalk.gray(`Base Path: ${basePath}\n`));
+
+      // Process each route file
+      routeFiles.forEach(routeFile => {
+        const routeName = path.basename(routeFile, '.js');
+        const routeModule = require(routeFile);
+        
+        // Check if it's an Express router
+        if (routeModule.stack || routeModule.router) {
+          const router = routeModule.router || routeModule;
+          console.log(chalk.bold.yellow(`/${routeName}`));
+          
+          // Display each route in the router
+          router.stack.forEach(layer => {
+            if (layer.route) {
+              const methods = Object.keys(layer.route.methods)
+                .filter(method => layer.route.methods[method])
+                .map(method => method.toUpperCase())
+                .join(', ');
+              
+              console.log(`  ${methods.padEnd(6)} ${layer.route.path}`);
+            }
+          });
+          console.log();
+        } else if (routeModule.router) {
+          // Handle exported router objects
+          console.log(chalk.bold.yellow(`/${routeName}`));
+          routeModule.router.stack.forEach(layer => {
+            if (layer.route) {
+              const methods = Object.keys(layer.route.methods)
+                .filter(method => layer.route.methods[method])
+                .map(method => method.toUpperCase())
+                .join(', ');
+              
+              console.log(`  ${methods.padEnd(6)} ${layer.route.path}`);
+            }
+          });
+          console.log();
+        }
+      });
+
+      console.log(chalk.gray('Use --verbose flag for more detailed information'));
+    } catch (error) {
+      console.error(chalk.red('Error listing routes:'), error.message);
+    }
+  });
+
+  
+
 // List all commands
 program
   .command('list-commands')
