@@ -13,7 +13,8 @@ const loadRoutes = (app, routesDir) => {
 
         // Validate and mount the router
         if (route && route.router) {
-          const routeName = `/${pluralize(file.split('.')[0])}`;
+          const routeName = `/api/v1/${pluralize(file.replace('.js', ''))}`;
+          console.log(`Mounting route: ${routeName}`);
           app.use(routeName, route.router);
         } else {
           console.error(`Invalid route file: ${file}. Ensure it exports { router }.`);
