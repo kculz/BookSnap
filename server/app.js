@@ -45,17 +45,17 @@ try {
 
 // Custom router
 const router = new Router();
-router.get('/', (req, res) => {
-  req.logger = logger; // Attach logger to request object
-  logger.info('Homepage accessed');
+// router.get('/', (req, res) => {
+//   req.logger = logger; // Attach logger to request object
+//   logger.info('Homepage accessed');
   
-  res.render('home', {
-    title: 'Grey.js - The Express.js Framework',
-    devs: [
-      { name: 'Kudzai Munyama', role: 'Lead Developer' },
-    ],
-  });
-});
+//   res.render('home', {
+//     title: 'Grey.js - The Express.js Framework',
+//     devs: [
+//       { name: 'Kudzai Munyama', role: 'Lead Developer' },
+//     ],
+//   });
+// });
 
 app.use(router.use());
 logger.debug('Custom router mounted');
