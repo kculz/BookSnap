@@ -104,5 +104,19 @@ module.exports = (sequelize, DataTypes) => {
     return values;
   };
 
+  User.associate = (models) => {
+    User.hasOne(models.Photographer, {
+      foreignKey: 'id',
+      as: 'photographerProfile'
+    });
+    User.hasMany(models.Booking, {
+      foreignKey: 'clientId',
+      as: 'clientBookings'
+    });
+    User.hasMany(models.Review, {
+      foreignKey: 'clientId',
+      as: 'reviewsGiven'
+    });
+  };
   return User;
 };
