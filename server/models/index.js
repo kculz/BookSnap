@@ -1,25 +1,39 @@
-// models/index.js
 const fs = require('fs');
 const path = require('path');
-const sequelize = require('../core/database'); // Import sequelize instance
-const Sequelize = require('sequelize');
+const { Sequelize } = require('sequelize');
+const basename = path.basename(__filename);
 
 const models = {};
 
-fs.readdirSync(__dirname)
-  .filter((file) => file !== 'index.js' && file.endsWith('.js'))
-  .forEach((file) => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    models[model.name] = model;
+// Phase 1: Load all model files without associations
+function loadModels(sequelize) {
+  fs.readdirSync(__dirname)
+    .filter(file => {
+      return (
+        file !== basename &&
+        file.slice(-3) === '.js' &&
+        !file.includes('.test.js')
+      );
+    })
+    .forEach(file => {
+      const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+      models[model.name] = model;
+    });
+
+  return models;
+}
+
+// Phase 2: Setup associations
+function setupAssociations(models) {
+  Object.keys(models).forEach(modelName => {
+    if (typeof models[modelName].associate === 'function') {
+      models[modelName].associate(models);
+    }
   });
+}
 
-Object.keys(models).forEach((modelName) => {
-  if (models[modelName].associate) {
-    models[modelName].associate(models);
-  }
-});
-
-models.sequelize = sequelize;
-models.Sequelize = Sequelize;
-
-module.exports = models;
+module.exports = {
+  loadModels,
+  setupAssociations,
+  models
+};

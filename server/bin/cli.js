@@ -66,44 +66,25 @@ program
   .description('Sync all models with the database')
   .action(async () => {
     const configPath = path.resolve(process.cwd(), 'config/database.js');
-    const modelsPath = path.resolve(process.cwd(), 'models');
+    const sequelize = new Sequelize(require(configPath));
 
-    // Load database configuration
-    const dbConfig = require(configPath);
-    const sequelize = new Sequelize(dbConfig);
-
-    // Import all models
-    const models = {};
-    fs.readdirSync(modelsPath)
-      .filter((file) => file.endsWith('.js'))
-      .forEach((file) => {
-        const modelPath = path.join(modelsPath, file);
-        console.log(`Loading model from: ${modelPath}`);  // Debugging line
-        const model = require(modelPath);
-
-        // Ensure model is a function
-        if (typeof model !== 'function') {
-          console.error(chalk.red(`Error: Model in ${modelPath} is not a function.`));
-          return;
-        }
-
-        console.log(`Model ${file} loaded successfully.`);  // Debugging line
-        models[model.name] = model(sequelize, Sequelize.DataTypes);
-      });
-
-    // Apply model associations
-    Object.keys(models).forEach((modelName) => {
-      if (models[modelName].associate) {
-        models[modelName].associate(models);
-      }
-    });
-
-    // Sync models with the database
     try {
+      // Load models without associations
+      const { loadModels } = require('../models');
+      const models = loadModels(sequelize);
+      
+      // Sync models first
+      console.log(chalk.blue('Syncing models...'));
       await sequelize.sync({ alter: true });
-      console.log(chalk.green('Database synced successfully!'));
+      
+      // Then setup associations
+      console.log(chalk.blue('Setting up associations...'));
+      const { setupAssociations } = require('../models');
+      setupAssociations(models);
+      
+      console.log(chalk.green('Database synced successfully with all associations!'));
     } catch (error) {
-      console.error(chalk.red('Error syncing database:'), error.message);
+      console.error(chalk.red('Error syncing database:'), error);
     } finally {
       await sequelize.close();
     }
@@ -846,6 +827,101 @@ module.exports = ${serviceName};`;
       console.log(chalk.gray('Use --verbose flag for more detailed information'));
     } catch (error) {
       console.error(chalk.red('Error listing routes:'), error.message);
+    }
+  });
+
+
+
+  program
+  .command('setup-associations')
+  .description('Establish all model associations')
+  .action(async () => {
+    const configPath = path.resolve(process.cwd(), 'config/database.js');
+    const sequelize = new Sequelize(require(configPath));
+    
+    try {
+      console.log(chalk.blue('Loading models...'));
+      const { loadModels, setupAssociations } = require('./models');
+      
+      // Load models first
+      const models = loadModels(sequelize);
+      
+      // Then setup associations
+      console.log(chalk.blue('Setting up associations...'));
+      setupAssociations(models);
+      
+      console.log(chalk.green('All associations established successfully!'));
+    } catch (error) {
+      console.error(chalk.red('Error setting up associations:'), error);
+    } finally {
+      await sequelize.close();
+    }
+  });
+
+  program
+  .command('migrate:model <modelName>')
+  .description('Run migration for a specific model')
+  .option('--force', 'Force sync (drop tables and recreate)', false)
+  .option('--alter', 'Alter tables to match model (safer than force)', true)
+  .action(async (modelName, options) => {
+    const configPath = path.resolve(process.cwd(), 'config/database.js');
+    const modelsPath = path.resolve(process.cwd(), 'models');
+    
+    try {
+      console.log(chalk.blue(`Starting migration for model: ${modelName}`));
+      
+      // Load database config and initialize Sequelize
+      const dbConfig = require(configPath);
+      const sequelize = new Sequelize(dbConfig.development); // or use the appropriate environment
+      
+      // Load the specific model
+      const modelFile = path.join(modelsPath, `${modelName}.js`);
+      if (!fs.existsSync(modelFile)) {
+        console.error(chalk.red(`Model file not found: ${modelFile}`));
+        process.exit(1);
+      }
+      
+      const model = require(modelFile);
+      if (typeof model !== 'function') {
+        console.error(chalk.red(`Invalid model in file: ${modelFile}`));
+        process.exit(1);
+      }
+      
+      // Initialize the model
+      const modelInstance = model(sequelize, Sequelize.DataTypes);
+      
+      // Load all models to set up associations
+      const allModels = {};
+      fs.readdirSync(modelsPath)
+        .filter(file => file.endsWith('.js'))
+        .forEach(file => {
+          const modelPath = path.join(modelsPath, file);
+          const model = require(modelPath);
+          allModels[model.name] = model(sequelize, Sequelize.DataTypes);
+        });
+      
+      // Set up associations if they exist
+      if (modelInstance.associate) {
+        modelInstance.associate(allModels);
+      }
+      
+      // Sync just this model
+      const syncOptions = {
+        force: options.force,
+        alter: options.alter && !options.force, // Don't alter if forcing
+      };
+      
+      console.log(chalk.blue(`Syncing model with options: ${JSON.stringify(syncOptions)}`));
+      
+      await modelInstance.sync(syncOptions);
+      console.log(chalk.green(`Successfully migrated model: ${modelName}`));
+      
+    } catch (error) {
+      console.error(chalk.red(`Error migrating model ${modelName}:`), error.message);
+      process.exit(1);
+    } finally {
+      await sequelize.close();
+      process.exit(0);
     }
   });
 
