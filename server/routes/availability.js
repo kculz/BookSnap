@@ -63,4 +63,4 @@ router.get(
   AvailabilityController.check
 );
 
-module.exports = router;
+module.exports = {router};
