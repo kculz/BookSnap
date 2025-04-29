@@ -9,7 +9,7 @@ const {
   getAvailabilitiesValidator,
   checkAvailabilityValidator,
   availabilityIdValidator,
-} = require('../validators/availabilityValidators');
+} = require('../validators/availability.validator');
 
 // Photographer availability management
 router.post(
